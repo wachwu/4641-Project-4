@@ -25,7 +25,7 @@ public class ProjectRunner {
 	static String extension = ".txt";
 	
 	public static void main(String[] args) throws Exception {
-		int minThreads = 1;
+		int minThreads = 4;
 		int maxThreads = 4;
 		long keepAlive = 10;
 		int iterations = 50000;
@@ -35,19 +35,22 @@ public class ProjectRunner {
 		
 
 		for (String maze : mazes) {
-			MazeMarkovDecisionProcess m = MazeMarkovDecisionProcess.load("mazes/"+maze+extension);
+//			MazeMarkovDecisionProcess m = MazeMarkovDecisionProcess.load("mazes/"+maze+extension);
 			double gamma = 0.95, lambda = 0.5, alpha = 0.2, decay = 1;
 			// not going to iterate over gamma for the large maze. It takes long enough as it is...
-			double epsilon = 0.5;
-			while (epsilon > 0.1) {
-				q.put(new MDPWorker(gamma, m, maze));
-				q.put(new QLWorker(gamma, lambda, alpha, decay, iterations, 
-						new EpsilonGreedyStrategy(epsilon), "EpsilonGreedy", m, maze, epsilon));
-				q.put(new QLWorker(gamma, lambda, alpha, decay, iterations, 
-						new DecayingEpsilonGreedyStrategy(epsilon, gamma), "DecayingEpsilonGreedy", m, maze, epsilon));
-				
-				epsilon -= difference;
-				System.out.println(q.size());
+			double epsilon = 1;
+			while (gamma > 0) {
+				//while (epsilon > 0.1) {
+					tpe.execute(new MDPWorker(gamma, MazeMarkovDecisionProcess.load("mazes/"+maze+extension), maze));
+	//				q.put(new QLWorker(gamma, lambda, alpha, decay, iterations, 
+	//						new EpsilonGreedyStrategy(epsilon), "EpsilonGreedy", m, maze, epsilon));
+	//				q.put(new QLWorker(gamma, lambda, alpha, decay, iterations, 
+	//						new DecayingEpsilonGreedyStrategy(epsilon, gamma), "DecayingEpsilonGreedy", m, maze, epsilon));
+	//				
+					//epsilon -= difference;
+					//System.out.println(q.size());
+				//}
+				gamma -= difference;
 			}
 
 		}

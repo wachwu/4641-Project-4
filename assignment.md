@@ -9,7 +9,7 @@ Read everything below carefully!
 
 ##The Problems Given to You
 
-You are being asked to explore **Markov Decision Processes** (MDPs):
+You are being asked to explore **[Markov Decision Processes]** (MDPs):
 
 - Come up with **two** interesting MDPs. 
     - Explain why they are interesting. 
@@ -47,5 +47,6 @@ The file `analysis.pdf` should contain:
 As always you are being graded on your analysis more than anything else.
 
 
+[Markov Decision Processes]: https://en.wikipedia.org/wiki/Markov_decision_process#Policy_iteration
 [value iteration]:  https://www.cs.cmu.edu/afs/cs/project/jair/pub/volume4/kaelbling96a-html/node19.html
 [policy iteration]: https://www.cs.cmu.edu/afs/cs/project/jair/pub/volume4/kaelbling96a-html/node20.html
