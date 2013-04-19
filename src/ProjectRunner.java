@@ -21,37 +21,38 @@ import shared.ThresholdTrainer;
 
 public class ProjectRunner {
 
-	static String[] mazes = {"medium"};
+	static String[] mazes = {"small", "medium"};
 	static String extension = ".txt";
 	
 	public static void main(String[] args) throws Exception {
 		int minThreads = 4;
 		int maxThreads = 4;
 		long keepAlive = 10;
-		int iterations = 50000;
+		int iterations = 10000;
 		double difference = 0.1;
 		LinkedBlockingQueue<Runnable> q = new LinkedBlockingQueue<Runnable>();
+		LinkedBlockingQueue<String> rq = new LinkedBlockingQueue<String>();
 		ThreadPoolExecutor tpe = new ThreadPoolExecutor(minThreads, maxThreads, keepAlive, TimeUnit.SECONDS, q);
 		
 
 		for (String maze : mazes) {
-//			MazeMarkovDecisionProcess m = MazeMarkovDecisionProcess.load("mazes/"+maze+extension);
+			MazeMarkovDecisionProcess m = MazeMarkovDecisionProcess.load("mazes/"+maze+extension);
 			double gamma = 0.95, lambda = 0.5, alpha = 0.2, decay = 1;
-			// not going to iterate over gamma for the large maze. It takes long enough as it is...
 			double epsilon = 1;
 			while (gamma > 0) {
-				//while (epsilon > 0.1) {
-					tpe.execute(new MDPWorker(gamma, MazeMarkovDecisionProcess.load("mazes/"+maze+extension), maze));
-	//				q.put(new QLWorker(gamma, lambda, alpha, decay, iterations, 
-	//						new EpsilonGreedyStrategy(epsilon), "EpsilonGreedy", m, maze, epsilon));
-	//				q.put(new QLWorker(gamma, lambda, alpha, decay, iterations, 
-	//						new DecayingEpsilonGreedyStrategy(epsilon, gamma), "DecayingEpsilonGreedy", m, maze, epsilon));
-	//				
-					//epsilon -= difference;
-					//System.out.println(q.size());
-				//}
+				epsilon = 1.0;
+				while (epsilon > 0.1) {
+//					tpe.execute(new MDPWorker(gamma, m, maze));
+					tpe.execute(new QLWorker(gamma, lambda, alpha, decay, iterations, 
+							new EpsilonGreedyStrategy(epsilon), "EpsilonGreedy", m, maze, epsilon));
+					tpe.execute(new QLWorker(gamma, lambda, alpha, decay, iterations, 
+							new DecayingEpsilonGreedyStrategy(epsilon, gamma), "DecayingEpsilonGreedy", m, maze, epsilon));
+					
+					epsilon -= difference;
+					System.out.println(q.size());
+				}
 				gamma -= difference;
-			}
+			};
 
 		}
 		
@@ -120,16 +121,23 @@ public class ProjectRunner {
 	        res.append("Iters:\t"+ this.iterations+"\n");
 	        
 	        QLambda ql = new QLambda(this.lambda, this.gamma, this.alpha, this.decay, this.strategy, maze);
-	        FixedIterationTrainer fit = new FixedIterationTrainer(ql, this.iterations);
-	        long startTime = System.currentTimeMillis();
-	        fit.train();
-	        Policy p = ql.getPolicy();
-	        long finishTime = System.currentTimeMillis();
+	        long startTime, finishTime;
+	        Policy p;
+	        do {
+	        	FixedIterationTrainer fit = new FixedIterationTrainer(ql, this.iterations);
+		        startTime = System.currentTimeMillis();
+		        fit.train();
+		        p = ql.getPolicy();
+		        finishTime = System.currentTimeMillis();
+		        this.iterations *= 2;
+		        if (this.iterations > 300000) break;
+	        } while (ql.getTotalReward() == 0);
+	        
 	        res.append("Q lambda learned : ");
 	        res.append(p);
 	        res.append('\n');
 	        res.append("in " + iterations + " iterations");
-	        res.append("and " + (finishTime - startTime) + " ms");
+	        res.append(" and " + (finishTime - startTime) + " ms");
 	        res.append('\n');
 	        res.append("Acquiring " + ql.getTotalReward() + " reward");
 	        res.append('\n');
@@ -178,7 +186,7 @@ public class ProjectRunner {
 	        res.append("Value iteration learned : " + p);
 	        res.append('\n');
 	        res.append("in " + tt.getIterations() + " iterations");
-	        res.append("and " + (finishTime - startTime) + " ms");
+	        res.append(" and " + (finishTime - startTime) + " ms");
 	        res.append('\n');
 	        MazeMarkovDecisionProcessVisualization mazeVis =
 	            new MazeMarkovDecisionProcessVisualization(maze);
@@ -197,7 +205,7 @@ public class ProjectRunner {
 	        res.append("Policy iteration learned : " + p);
 	        res.append('\n');
 	        res.append("in " + tt.getIterations() + " iterations");
-	        res.append("and " + (finishTime - startTime) + " ms");
+	        res.append(" and " + (finishTime - startTime) + " ms");
 	        res.append('\n');
 	        res.append(mazeVis.toString(p));
 	        res.append('\n');
